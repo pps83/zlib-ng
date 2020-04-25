@@ -6,10 +6,6 @@
 #ifndef ZCONF_H
 #define ZCONF_H
 
-#if !defined(_WIN32) && defined(__WIN32__)
-#  define _WIN32
-#endif
-
 #ifdef __STDC_VERSION__
 #  if __STDC_VERSION__ >= 199901L
 #    ifndef STDC99
@@ -51,7 +47,7 @@
    /* If building or using zlib as a DLL, define ZLIB_DLL.
     * This is not mandatory, but it offers a little performance increase.
     */
-#  if defined(ZLIB_DLL) && (!defined(__BORLANDC__) || (__BORLANDC__ >= 0x500))
+#  if defined(ZLIB_DLL)
 #    ifdef ZLIB_INTERNAL
 #      define ZEXTERN extern __declspec(dllexport)
 #    else
