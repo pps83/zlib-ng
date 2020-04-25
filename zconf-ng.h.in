@@ -47,7 +47,6 @@
 
 /* Type declarations */
 
-
 #if defined(_WIN32)
    /* If building or using zlib as a DLL, define ZLIB_DLL.
     * This is not mandatory, but it offers a little performance increase.
