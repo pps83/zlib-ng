@@ -6,7 +6,9 @@
 #include "zbuild.h"
 #include "zutil_p.h"
 #include "gzguts.h"
+#ifndef ZLIB_AMALGAMATED
 #include "gzread_mangle.h"
+#endif
 
 /* Local functions */
 static int gz_read_init(gz_state *state);
