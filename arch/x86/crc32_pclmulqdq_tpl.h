@@ -48,6 +48,7 @@
 #  define z128_xor3_epi64(a, b, c)    _mm_xor_si128(_mm_xor_si128(a, b), c)
 #endif
 
+#if !defined(X86_VPCLMULQDQ) || !defined(ZLIB_AMALGAMATED)
 static inline void fold_1(__m128i *xmm_crc0, __m128i *xmm_crc1, __m128i *xmm_crc2, __m128i *xmm_crc3, const __m128i xmm_fold4) {
     __m128i x_low  = _mm_clmulepi64_si128(*xmm_crc0, xmm_fold4, 0x01);
     __m128i x_high = _mm_clmulepi64_si128(*xmm_crc0, xmm_fold4, 0x10);
@@ -116,6 +117,7 @@ static inline void fold_12(__m128i *xmm_crc0, __m128i *xmm_crc1, __m128i *xmm_cr
     *xmm_crc2 = _mm_xor_si128(x_low2, x_high2);
     *xmm_crc3 = _mm_xor_si128(x_low3, x_high3);
 }
+#endif
 
 #ifdef X86_VPCLMULQDQ
 static inline void fold_16(__m512i *zmm_crc0, __m512i *zmm_crc1, __m512i *zmm_crc2, __m512i *zmm_crc3,
@@ -136,6 +138,7 @@ static inline void fold_16(__m512i *zmm_crc0, __m512i *zmm_crc1, __m512i *zmm_cr
 }
 #endif
 
+#if !defined(X86_VPCLMULQDQ) || !defined(ZLIB_AMALGAMATED)
 static inline uint32_t crc32_copy_small(uint32_t crc, uint8_t *dst, const uint8_t *buf, size_t len, const int COPY) {
     uint32_t c = ~crc;
 
@@ -149,6 +152,7 @@ static inline uint32_t crc32_copy_small(uint32_t crc, uint8_t *dst, const uint8_
 
     return ~c;
 }
+#endif
 
 Z_FORCEINLINE static uint32_t crc32_copy_impl(uint32_t crc, uint8_t *dst, const uint8_t *src, size_t len, const int COPY) {
     size_t copy_len = len;
