@@ -31,7 +31,7 @@
 #include "../../crc32_braid_p.h"
 #include <assert.h>
 
-#ifdef X86_VPCLMULQDQ_CRC
+#if defined(X86_VPCLMULQDQ_CRC) && !defined(ZLIB_AMALGAMATED)
 extern size_t fold_16_vpclmulqdq(__m128i *xmm_crc0, __m128i *xmm_crc1,
     __m128i *xmm_crc2, __m128i *xmm_crc3, const uint8_t *src, size_t len, __m128i init_crc,
     int32_t first);
