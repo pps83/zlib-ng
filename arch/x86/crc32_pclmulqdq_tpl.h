@@ -61,6 +61,7 @@
 #  define z128_xor3_epi64(a, b, c)    _mm_xor_si128(_mm_xor_si128(a, b), c)
 #endif
 
+#if !defined(X86_VPCLMULQDQ) || !defined(ZLIB_AMALGAMATED)
 static inline void fold_state_1(__m128i *xmm_crc0, __m128i *xmm_crc1, __m128i *xmm_crc2, __m128i *xmm_crc3,
                                 const __m128i xmm_fold4) {
     __m128i x_low  = _mm_clmulepi64_si128(*xmm_crc0, xmm_fold4, 0x01);
@@ -133,6 +134,7 @@ static inline void fold_state_12(__m128i *xmm_crc0, __m128i *xmm_crc1, __m128i *
     *xmm_crc2 = _mm_xor_si128(x_low2, x_high2);
     *xmm_crc3 = _mm_xor_si128(x_low3, x_high3);
 }
+#endif
 
 /* 512-bit fold function requires AVX-512F */
 #if defined(X86_VPCLMULQDQ) && defined(__AVX512F__)
