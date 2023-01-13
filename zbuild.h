@@ -1,6 +1,8 @@
 #ifndef _ZBUILD_H
 #define _ZBUILD_H
 
+#define ZLIB_COMPAT 1
+
 #define _POSIX_SOURCE 1  /* fileno */
 #ifndef _POSIX_C_SOURCE
 #  define _POSIX_C_SOURCE 200809L /* snprintf, posix_memalign, strdup */
