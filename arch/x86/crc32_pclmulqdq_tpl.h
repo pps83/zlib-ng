@@ -29,7 +29,9 @@
 #include "../../crc32_fold.h"
 #include "../../crc32_braid_p.h"
 #include "x86_intrins.h"
+#if !defined(ZLIB_AMALGAMATED)
 #include <assert.h>
+#endif
 
 #ifdef X86_VPCLMULQDQ
 static size_t fold_16_vpclmulqdq(__m128i *xmm_crc0, __m128i *xmm_crc1,
@@ -39,6 +41,7 @@ static size_t fold_16_vpclmulqdq_copy(__m128i *xmm_crc0, __m128i *xmm_crc1,
     __m128i *xmm_crc2, __m128i *xmm_crc3, uint8_t *dst, const uint8_t *src, size_t len);
 #endif
 
+#if !defined(X86_VPCLMULQDQ) || !defined(ZLIB_AMALGAMATED)
 static void fold_1(__m128i *xmm_crc0, __m128i *xmm_crc1, __m128i *xmm_crc2, __m128i *xmm_crc3) {
     const __m128i xmm_fold4 = _mm_set_epi32( 0x00000001, 0x54442bd4,
                                              0x00000001, 0xc6e41596);
@@ -244,6 +247,7 @@ static inline void crc32_fold_save(__m128i *fold, const __m128i *fold0, const __
     _mm_storeu_si128(fold + 2, *fold2);
     _mm_storeu_si128(fold + 3, *fold3);
 }
+#endif
 
 Z_INTERNAL uint32_t CRC32_FOLD_RESET(crc32_fold *crc) {
     __m128i xmm_crc0 = _mm_cvtsi32_si128(0x9db42487);
@@ -268,6 +272,7 @@ Z_INTERNAL uint32_t CRC32_FOLD_RESET(crc32_fold *crc) {
 #endif
 #include "crc32_fold_pclmulqdq_tpl.h"
 
+#if !defined(X86_VPCLMULQDQ) || !defined(ZLIB_AMALGAMATED)
 static const unsigned ALIGNED_(16) crc_k[] = {
     0xccaa009e, 0x00000000, /* rk1 */
     0x751997d0, 0x00000001, /* rk2 */
@@ -284,6 +289,7 @@ static const unsigned ALIGNED_(16) crc_mask[4] = {
 static const unsigned ALIGNED_(16) crc_mask2[4] = {
     0x00000000, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF
 };
+#endif
 
 Z_INTERNAL uint32_t CRC32_FOLD_FINAL(crc32_fold *crc) {
     const __m128i xmm_mask  = _mm_load_si128((__m128i *)crc_mask);
