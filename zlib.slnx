@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="win32/test.vcxproj" Id="df4969ef-3d12-40a8-bd99-9362379f738e" />
+  <Project Path="win32/zlib.vcxproj" Id="2120dc6f-962e-421f-ac40-d00be8eb8ec5" />
+</Solution>
