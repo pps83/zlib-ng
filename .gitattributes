@@ -2,6 +2,9 @@
 * text=auto eol=lf
 
 crc32_braid_tbl.h hooks-max-size=1000000
+*.sln eol=crlf
+*.vcxproj eol=crlf
+*.vcxproj.filters eol=crlf
 
 # Don't export git/github-related files in tar/zip archives
 /.github export-ignore

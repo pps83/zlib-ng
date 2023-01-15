@@ -576,7 +576,7 @@ static void test_deflate_bound(void) {
 
     /* calculate actual output length and update structure */
     estimateLen = PREFIX(deflateBound)(&c_stream, len);
-    outBuf = malloc(estimateLen);
+    outBuf = (unsigned char *)malloc(estimateLen);
 
     if (outBuf != NULL) {
         /* update zlib configuration */
@@ -673,7 +673,7 @@ static void test_deflate_get_dict(unsigned char *compr, size_t comprLen) {
     if (err != Z_STREAM_END)
         error("deflate should report Z_STREAM_END\n");
 
-    dictNew = calloc(256, 1);
+    dictNew = (unsigned char *)calloc(256, 1);
     dictLen = (z_uint32_t *)calloc(4, 1);
     err = PREFIX(deflateGetDictionary)(&c_stream, dictNew, dictLen);
 
@@ -695,8 +695,8 @@ static void test_deflate_get_dict(unsigned char *compr, size_t comprLen) {
 static void test_deflate_pending(unsigned char *compr, size_t comprLen) {
     PREFIX3(stream) c_stream; /* compression stream */
     int err;
-    z_int32_t *bits = calloc(256, 1);
-    z_uint32_t *ped = calloc(256, 1);
+    z_int32_t *bits = (z_int32_t *)calloc(256, 1);
+    z_uint32_t *ped = (z_uint32_t *)calloc(256, 1);
     size_t len = strlen(hello)+1;
 
 
@@ -833,7 +833,7 @@ static void test_deflate_prime(unsigned char *compr, size_t comprLen, unsigned c
  * Test deflateSetHeader() with small buffers
  */
 static void test_deflate_set_header(unsigned char *compr, size_t comprLen) {
-    PREFIX(gz_header) *head = calloc(1, sizeof(PREFIX(gz_header)));
+    PREFIX(gz_header) *head = (PREFIX(gz_header) *)calloc(1, sizeof(PREFIX(gz_header)));
     PREFIX3(stream) c_stream; /* compression stream */
     int err;
     size_t len = strlen(hello)+1;
