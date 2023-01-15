@@ -336,7 +336,7 @@ static uint32_t update_hash_stub(deflate_state* const s, uint32_t h, uint32_t va
 }
 
 /* functable init */
-Z_INTERNAL Z_TLS struct functable_s functable = {
+Z_INTERNAL struct functable_s functable = {
     adler32_stub,
     adler32_fold_copy_stub,
     chunkmemset_safe_stub,
