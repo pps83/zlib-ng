@@ -71,7 +71,7 @@ struct mem_zone {
 static void *mem_alloc(void *mem, unsigned count, unsigned size) {
     void *ptr;
     struct mem_item *item;
-    struct mem_zone *zone = mem;
+    struct mem_zone *zone = (struct mem_zone *)mem;
     size_t len = count * (size_t)size;
 
     /* induced allocation failure */
@@ -86,7 +86,7 @@ static void *mem_alloc(void *mem, unsigned count, unsigned size) {
     memset(ptr, 0xa5, len);
 
     /* create a new item for the list */
-    item = malloc(sizeof(struct mem_item));
+    item = (struct mem_item *)malloc(sizeof(struct mem_item));
     if (item == NULL) {
         free(ptr);
         return NULL;
@@ -110,7 +110,7 @@ static void *mem_alloc(void *mem, unsigned count, unsigned size) {
 /* memory free routine to pass to zlib */
 static void mem_free(void *mem, void *ptr) {
     struct mem_item *item, *next;
-    struct mem_zone *zone = mem;
+    struct mem_zone *zone = (struct mem_zone *)mem;
 
     /* if no zone, just do a free */
     if (zone == NULL) {
@@ -156,7 +156,7 @@ static void mem_free(void *mem, void *ptr) {
 static void mem_setup(PREFIX3(stream) *strm) {
     struct mem_zone *zone;
 
-    zone = malloc(sizeof(struct mem_zone));
+    zone = (struct mem_zone *)malloc(sizeof(struct mem_zone));
     assert(zone != NULL);
     zone->first = NULL;
     zone->total = 0;
@@ -171,30 +171,30 @@ static void mem_setup(PREFIX3(stream) *strm) {
 
 /* set a limit on the total memory allocation, or 0 to remove the limit */
 static void mem_limit(PREFIX3(stream) *strm, size_t limit) {
-    struct mem_zone *zone = strm->opaque;
+    struct mem_zone *zone = (struct mem_zone *)strm->opaque;
 
     zone->limit = limit;
 }
 
 /* show the current total requested allocations in bytes */
-static void mem_used(PREFIX3(stream) *strm, char *prefix) {
-    struct mem_zone *zone = strm->opaque;
+static void mem_used(PREFIX3(stream) *strm, const char *prefix) {
+    struct mem_zone *zone = (struct mem_zone *)strm->opaque;
 
     fprintf(stderr, "%s: %" PRIu64 " allocated\n", prefix, (uint64_t)zone->total);
 }
 
 /* show the high water allocation in bytes */
-static void mem_high(PREFIX3(stream) *strm, char *prefix) {
-    struct mem_zone *zone = strm->opaque;
+static void mem_high(PREFIX3(stream) *strm, const char *prefix) {
+    struct mem_zone *zone = (struct mem_zone *)strm->opaque;
 
     fprintf(stderr, "%s: %" PRIu64 " high water mark\n", prefix, (uint64_t)zone->highwater);
 }
 
 /* release the memory allocation zone -- if there are any surprises, notify */
-static void mem_done(PREFIX3(stream) *strm, char *prefix) {
+static void mem_done(PREFIX3(stream) *strm, const char *prefix) {
     int count = 0;
     struct mem_item *item, *next;
-    struct mem_zone *zone = strm->opaque;
+    struct mem_zone *zone = (struct mem_zone *)strm->opaque;
 
     /* show high water mark */
     mem_high(strm, prefix);
@@ -242,7 +242,7 @@ static unsigned char *h2b(const char *hex, unsigned *len) {
 
     inlen = (strlen(hex) + 1) >> 1;
     assert(inlen != 0);     /* tell static analyzer we won't call malloc(0) */
-    in = malloc(inlen);
+    in = (unsigned char *)malloc(inlen);
     if (in == NULL)
         return NULL;
     next = 0;
@@ -264,7 +264,7 @@ static unsigned char *h2b(const char *hex, unsigned *len) {
     if (len != NULL)
         *len = next;
     assert(next != 0);      /* tell static analyzer we won't call realloc(in, 0) */
-    re = realloc(in, next);
+    re = (unsigned char *)realloc(in, next);
     return re == NULL ? in : re;
 }
 
@@ -277,7 +277,7 @@ static unsigned char *h2b(const char *hex, unsigned *len) {
    header information is collected with inflateGetHeader().  If a zlib stream
    is looking for a dictionary, then an empty dictionary is provided.
    inflate() is run until all of the input data is consumed. */
-static void inf(char *hex, char *what, unsigned step, int win, unsigned len, int err) {
+static void inf(const char *hex, const char *what, unsigned step, int win, unsigned len, int err) {
     int ret;
     unsigned have;
     unsigned char *in, *out;
@@ -292,7 +292,7 @@ static void inf(char *hex, char *what, unsigned step, int win, unsigned len, int
         mem_done(&strm, what);
         return;
     }
-    out = malloc(len);                          assert(out != NULL);
+    out = (unsigned char *)malloc(len);                          assert(out != NULL);
     if (win == 47) {
         head.extra = out;
         head.extra_max = len;
@@ -415,9 +415,9 @@ static void cover_wrap(void) {
     strm.next_in = NULL;
     ret = PREFIX(inflateInit2)(&strm, -8);
     strm.avail_in = 2;
-    strm.next_in = (void *)"\x63";
+    strm.next_in = (unsigned char *)(void *)"\x63";
     strm.avail_out = 1;
-    strm.next_out = (void *)&ret;
+    strm.next_out = (unsigned char *)(void *)&ret;
     mem_limit(&strm, 1);
     ret = PREFIX(inflate)(&strm, Z_NO_FLUSH);   assert(ret == Z_MEM_ERROR);
     ret = PREFIX(inflate)(&strm, Z_NO_FLUSH);   assert(ret == Z_MEM_ERROR);
@@ -428,11 +428,11 @@ static void cover_wrap(void) {
     mem_limit(&strm, (sizeof(struct inflate_state) << 1) + 256);
     ret = PREFIX(inflatePrime)(&strm, 16, 0);   assert(ret == Z_OK);
     strm.avail_in = 2;
-    strm.next_in = (void *)"\x80";
+    strm.next_in = (unsigned char *)(void *)"\x80";
     ret = PREFIX(inflateSync)(&strm);           assert(ret == Z_DATA_ERROR);
     ret = PREFIX(inflate)(&strm, Z_NO_FLUSH);   assert(ret == Z_STREAM_ERROR);
     strm.avail_in = 4;
-    strm.next_in = (void *)"\0\0\xff\xff";
+    strm.next_in = (unsigned char *)(void *)"\0\0\xff\xff";
     ret = PREFIX(inflateSync)(&strm);           assert(ret == Z_OK);
     (void)PREFIX(inflateSyncPoint)(&strm);
     ret = PREFIX(inflateCopy)(&copy, &strm);    assert(ret == Z_MEM_ERROR);
@@ -458,7 +458,7 @@ static unsigned pull(void *desc, z_const unsigned char **buf) {
         next = 0;
         return 0;   /* no input (already provided at next_in) */
     }
-    state = (void *)((PREFIX3(stream) *)desc)->state;
+    state = (struct inflate_state*)(void *)((PREFIX3(stream) *)desc)->state;
     if (state != NULL)
         state->mode = SYNC;     /* force an otherwise impossible situation */
     return next < sizeof(dat) ? (*buf = dat + next++, 1) : 0;
@@ -492,12 +492,12 @@ static void cover_back(void) {
     ret = PREFIX(inflateBackInit)(&strm, 15, win);
                                                 assert(ret == Z_OK);
     strm.avail_in = 2;
-    strm.next_in = (void *)"\x03";
+    strm.next_in = (unsigned char *)(void *)"\x03";
     ret = PREFIX(inflateBack)(&strm, pull, NULL, push, NULL);
                                                 assert(ret == Z_STREAM_END);
         /* force output error */
     strm.avail_in = 3;
-    strm.next_in = (void *)"\x63\x00";
+    strm.next_in = (unsigned char *)(void *)"\x63\x00";
     ret = PREFIX(inflateBack)(&strm, pull, NULL, push, &strm);
                                                 assert(ret == Z_BUF_ERROR);
         /* force mode error by mucking with state */
@@ -514,7 +514,7 @@ static void cover_back(void) {
 }
 
 /* do a raw inflate of data in hexadecimal with both inflate and inflateBack */
-static int try(char *hex, char *id, int err) {
+static int try(const char *hex, const char *id, int err) {
     int ret;
     unsigned len, size;
     unsigned char *in, *out, *win;
@@ -527,11 +527,11 @@ static int try(char *hex, char *id, int err) {
 
     /* allocate work areas */
     size = len << 3;
-    out = malloc(size);
+    out = (unsigned char *)malloc(size);
     assert(out != NULL);
-    win = malloc(32768);
+    win = (unsigned char *)malloc(32768);
     assert(win != NULL);
-    prefix = malloc(strlen(id) + 6);
+    prefix = (char *)malloc(strlen(id) + 6);
     assert(prefix != NULL);
 
     /* first with inflate */
