@@ -429,7 +429,7 @@ static uint32_t compare256_stub(const uint8_t* src0, const uint8_t* src1) {
 }
 
 /* functable init */
-Z_INTERNAL Z_TLS struct functable_s functable = {
+Z_INTERNAL struct functable_s functable = {
     adler32_stub,
     adler32_fold_copy_stub,
     crc32_stub,
