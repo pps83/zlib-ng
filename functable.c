@@ -49,7 +49,7 @@ static void init_functable(void) {
     // slide_hash_stub:
     ft.slide_hash = &slide_hash_c;
 #ifdef X86_SSE2
-#  if !defined(__x86_64__) && !defined(_M_X64) && !defined(X86_NOCHECK_SSE2)
+#  if !defined(__x86_64__) && !defined(_M_X64)
     if (x86_cpu_has_sse2)
 #  endif
         ft.slide_hash = &slide_hash_sse2;
@@ -213,7 +213,7 @@ static void init_functable(void) {
     //chunksize_stub:
     ft.chunksize = &chunksize_c;
 #ifdef X86_SSE2_CHUNKSET
-# if !defined(__x86_64__) && !defined(_M_X64) && !defined(X86_NOCHECK_SSE2)
+# if !defined(__x86_64__) && !defined(_M_X64)
     if (x86_cpu_has_sse2)
 # endif
         ft.chunksize = &chunksize_sse2;
@@ -234,7 +234,7 @@ static void init_functable(void) {
     // chunkmemset_safe_stub:
     ft.chunkmemset_safe = &chunkmemset_safe_c;
 #ifdef X86_SSE2_CHUNKSET
-# if !defined(__x86_64__) && !defined(_M_X64) && !defined(X86_NOCHECK_SSE2)
+# if !defined(__x86_64__) && !defined(_M_X64)
     if (x86_cpu_has_sse2)
 # endif
         ft.chunkmemset_safe = &chunkmemset_safe_sse2;
@@ -259,7 +259,7 @@ static void init_functable(void) {
     // inflate_fast_stub:
     ft.inflate_fast = &inflate_fast_c;
 #ifdef X86_SSE2_CHUNKSET
-# if !defined(__x86_64__) && !defined(_M_X64) && !defined(X86_NOCHECK_SSE2)
+# if !defined(__x86_64__) && !defined(_M_X64)
     if (x86_cpu_has_sse2)
 # endif
         ft.inflate_fast = &inflate_fast_sse2;
