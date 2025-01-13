@@ -49,7 +49,6 @@ static inline uint8_t* CHUNKCOPY(uint8_t *out, uint8_t const *from, unsigned len
    This assumption holds because inflate_fast() starts every iteration with at
    least 258 bytes of output space available (258 being the maximum length
    output from a single token; see inflate_fast()'s assumptions below). */
-#ifndef HAVE_CHUNKUNROLL
 static inline uint8_t* CHUNKUNROLL(uint8_t *out, unsigned *dist, unsigned *len) {
     unsigned char const *from = out - *dist;
     chunk_t chunk;
@@ -62,7 +61,6 @@ static inline uint8_t* CHUNKUNROLL(uint8_t *out, unsigned *dist, unsigned *len) 
     }
     return out;
 }
-#endif
 
 #ifndef HAVE_CHUNK_MAG
 /* Loads a magazine to feed into memory of the pattern */
