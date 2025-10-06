@@ -24,6 +24,15 @@ private:
     deflate_state *s_g;
 
 public:
+    /**
+     * @brief Prepare the benchmark fixture by allocating and initializing working data.
+     *
+     * Allocates two 64-byte-aligned arrays of `uint16_t` (one of size HASH_SIZE, one of size MAX_RANDOM_INTS),
+     * fills them with pseudorandom `uint16_t` values, allocates a `deflate_state` structure, and sets
+     * its `head` and `prev` pointers to the allocated arrays.
+     *
+     * @param state Benchmark-provided state object from Google Benchmark (supplied by the framework).
+     */
     void SetUp(const ::benchmark::State& state) {
         l0 = (uint16_t *)zng_alloc_aligned(HASH_SIZE * sizeof(uint16_t), 64);
 
