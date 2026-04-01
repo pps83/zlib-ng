@@ -2,6 +2,9 @@
 #pragma warning(disable: 4127 4244 4324 4334)
 #define _CRT_NONSTDC_NO_WARNINGS
 #endif
+#if defined(__CYGWIN__) && defined(__GNUC__) && !defined(__clang__) && (__GNUC__ == 13)
+#define IS_BROKEN_CYGWIN_GCC // Detect broken GCC 13 on Cygwin
+#endif
 
 #define ZLIB_AMALGAMATED 1
 #define ZLIB_COMPAT 1
@@ -10,8 +13,10 @@
 #define WITH_OPTIM
 #define HAVE_BUILTIN_ASSUME_ALIGNED
 #define X86_AVX2
+#ifndef IS_BROKEN_CYGWIN_GCC
 #define X86_AVX512
 #define X86_AVX512VNNI
+#endif // IS_BROKEN_CYGWIN_GCC
 #define X86_FEATURES
 #define X86_HAVE_XSAVE_INTRIN
 #define X86_PCLMULQDQ_CRC
@@ -54,13 +59,16 @@
 #define __AVX__ 1
 #define __AVX2__ 1
 
-// define avx512 (before any headers included)
+// Set avx512 defines before any headers included
+#ifndef IS_BROKEN_CYGWIN_GCC
 #define __AVX512F__ 1
 #define __AVX512DQ__ 1
 #define __AVX512BW__ 1
 #define __AVX512VL__ 1
 #define __AVX512VNNI__ 1
 #define __VPCLMULQDQ__ 1
+#endif // IS_BROKEN_CYGWIN_GCC
+
 #endif
 
 #undef ZLIB_STRINGIFY
@@ -271,7 +279,7 @@ ZLIB_UNTARGET_REGION // avx512-vnni
 
 #define __VPCLMULQDQ__ 1
 
-ZLIB_TARGET_REGION("sse4.1,pclmul,bmi2,avx2,avx512f,avx512bw,avx512vl,avx512dq,evex512,vpclmulqdq")
+ZLIB_TARGET_REGION("sse4.1,pclmul,bmi2,avx2,avx512f,avx512bw,avx512vl,avx512dq,vpclmulqdq")
 #define crc32_copy_impl crc32_copy_impl_vpclmulqdq
 #include "arch/x86/crc32_vpclmulqdq.c"
 #   include "zlib_undef.inl"
