@@ -1,5 +1,5 @@
 #ifdef _MSC_VER
-#pragma warning(disable: 4127 4244 4324 4334)
+#pragma warning(disable: 4127 4244 4319 4324 4334)
 #define _CRT_NONSTDC_NO_WARNINGS
 #endif
 #if defined(__CYGWIN__) && defined(__GNUC__) && !defined(__clang__) && (__GNUC__ == 13)
@@ -11,6 +11,14 @@
 
 //#define WITH_GZFILEOP
 #define WITH_OPTIM
+#if defined(__GNUC__) || defined(__clang__)
+#define HAVE_ATTRIBUTE_ALIGNED
+#pragma GCC diagnostic ignored "-Wattributes"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
+
+#if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64)
+// The ARM files assign HINT_ALIGNED's void* to typed pointers, which C allows and this C++ unit does not
 #define HAVE_BUILTIN_ASSUME_ALIGNED
 #define X86_AVX2
 #ifndef IS_BROKEN_CYGWIN_GCC
@@ -31,20 +39,33 @@
 #ifndef IS_BROKEN_CYGWIN_GCC
 #define X86_VPCLMULQDQ_AVX512
 #endif // IS_BROKEN_CYGWIN_GCC
-#if defined(__GNUC__) || defined(__clang__)
-#define HAVE_ATTRIBUTE_ALIGNED
-#pragma GCC diagnostic ignored "-Wattributes"
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-#endif
 
 #if _MSC_VER
 #define HAVE_CPUID_MS
 #elif defined(__GNUC__) || defined(__clang__)
 #define HAVE_CPUID_GNU
 #endif
+#endif
 
-#if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64)
-#error ARM build is not supported
+// AArch64: NEON is the baseline; CRC32, dot product and PMULL+EOR3 are checked at run time, as on x86
+#if defined(__aarch64__) || defined(_M_ARM64)
+#define ARCH_ARM
+#define ARCH_64BIT
+#define ARM_FEATURES
+#define ARM_NEON
+#define ARM_NEON_HASLD4
+#define ARM_NEON_DOTPROD
+#define ARM_CRC32
+#define ARM_PMULL_EOR3
+#ifdef _MSC_VER
+#define __ARM_NEON__ 1
+#else
+#define HAVE_ARM_ACLE_H
+#define ARM_CRC32_INTRIN
+#endif
+#ifdef __linux__
+#define HAVE_SYS_AUXV_H
+#endif
 #endif
 
 #if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64)
@@ -108,6 +129,10 @@
 #include <stdarg.h>
 #include <sys/types.h>
 
+#if defined(ARCH_ARM) && defined(_WIN32)
+#include <windows.h> // here, before deflate.h's Code macro, which breaks winnt.h when arm_features.c includes it
+#endif
+#ifdef ARCH_X86
 #ifdef _MSC_VER
 #include <intrin.h>
 #else
@@ -122,6 +147,7 @@
 #include <avx512vlbwintrin.h>
 #include <avxvnniintrin.h>
 #include <vpclmulqdqintrin.h>
+#endif
 #endif
 
 #ifdef _DEBUG
@@ -145,6 +171,7 @@
 #include "functable.h"
 #include "arch_functions.h"
 
+#ifdef ARCH_X86
 ZLIB_TARGET_REGION("sse4.1,pclmul,bmi2,avx2")
 #include "adler32.c"
 #include "arch/generic/adler32_c.c"
@@ -327,6 +354,119 @@ ZLIB_UNTARGET_REGION // avx512-vpclmulqdq
 #undef __AVX512BW__
 #undef __AVX512VL__
 #undef __VPCLMULQDQ__
+#endif // ARCH_X86
+
+#ifdef ARCH_ARM
+#include "adler32.c"
+#include "arch/generic/adler32_c.c"
+#define adler32_copy_impl adler32_copy_impl_neon
+#define taps taps_neon
+#include "arch/arm/adler32_neon.c"
+#   include "zlib_undef.inl"
+#undef taps
+#define adler32_copy_impl adler32_copy_impl_neon_dotprod
+#define taps taps_neon_dotprod
+#include "arch/arm/adler32_neon_dotprod.c"
+#   include "zlib_undef.inl"
+#undef taps
+#include "crc32_braid_comb.c"
+#include "arch/generic/crc32_chorba_c.c"
+#include "arch/generic/crc32_braid_c.c"
+#include "arch/arm/crc32_armv8.c"
+#   include "zlib_undef.inl"
+#include "arch/arm/crc32_armv8_pmull_eor3.c"
+#   include "zlib_undef.inl"
+#include "crc32.c"
+#include "compress.c"
+#include "cpu_features.c"
+#include "arch/arm/arm_features.c"
+#include "deflate.c"
+#include "deflate_fast.c"
+#include "deflate_huff.c"
+#include "deflate_medium.c"
+#include "deflate_quick.c"
+#include "deflate_rle.c"
+#include "deflate_slow.c"
+#include "deflate_stored.c"
+#include "infback.c"
+#   include "zlib_undef.inl"
+#include "inftrees.c"
+#include "insert_string.c"
+#   include "zlib_undef.inl"
+#include "trees.c"
+#include "uncompr.c"
+#include "inflate.c"
+#   include "zlib_undef.inl"
+#include "zutil.c"
+
+#include "arch/generic/slide_hash_c.c"
+#define slide_hash_chain slide_hash_chain_neon
+#include "arch/arm/slide_hash_neon.c"
+#   include "zlib_undef.inl"
+
+#define chunkmemset_4 chunkmemset_4_c
+#define chunkmemset_8 chunkmemset_8_c
+#define loadchunk loadchunk_c
+#define storechunk storechunk_c
+#define chunk_t chunk_t_c
+#define GET_CHUNK_MAG GET_CHUNK_MAG_c
+#define CHUNKCOPY_SAFE CHUNKCOPY_SAFE_c
+#include "arch/generic/chunkset_c.c"
+#   include "zlib_undef.inl"
+
+#define perm_idx_lut perm_idx_lut_neon
+#define chunkmemset_1 chunkmemset_1_neon
+#define chunkmemset_2 chunkmemset_2_neon
+#define chunkmemset_4 chunkmemset_4_neon
+#define chunkmemset_8 chunkmemset_8_neon
+#define loadchunk loadchunk_neon
+#define storechunk storechunk_neon
+#define chunk_t chunk_t_neon
+#define GET_CHUNK_MAG GET_CHUNK_MAG_neon
+#define CHUNKCOPY_SAFE CHUNKCOPY_SAFE_neon
+#include "arch/arm/chunkset_neon.c"
+#   include "zlib_undef.inl"
+
+#include "arch/generic/compare256_c.c"
+#   include "zlib_undef.inl"
+#include "arch/arm/compare256_neon.c"
+#   include "zlib_undef.inl"
+#endif // ARCH_ARM
+
+// Any other CPU, 32-bit ARM included: the portable C code alone
+#if !defined(ARCH_X86) && !defined(ARCH_ARM)
+#include "adler32.c"
+#include "arch/generic/adler32_c.c"
+#include "crc32_braid_comb.c"
+#include "arch/generic/crc32_chorba_c.c"
+#include "arch/generic/crc32_braid_c.c"
+#include "crc32.c"
+#include "compress.c"
+#include "cpu_features.c"
+#include "deflate.c"
+#include "deflate_fast.c"
+#include "deflate_huff.c"
+#include "deflate_medium.c"
+#include "deflate_quick.c"
+#include "deflate_rle.c"
+#include "deflate_slow.c"
+#include "deflate_stored.c"
+#include "infback.c"
+#   include "zlib_undef.inl"
+#include "inftrees.c"
+#include "insert_string.c"
+#   include "zlib_undef.inl"
+#include "trees.c"
+#include "uncompr.c"
+#include "inflate.c"
+#   include "zlib_undef.inl"
+#include "zutil.c"
+#include "arch/generic/slide_hash_c.c"
+#include "arch/generic/chunkset_c.c"
+#   include "zlib_undef.inl"
+#include "arch/generic/compare256_c.c"
+#   include "zlib_undef.inl"
+#endif
 
 #include "functable.c"
 
